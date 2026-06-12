@@ -13,6 +13,47 @@
       ul   { line-height: 1.8; }
       a    { color: #2E75B6; font-weight: bold; text-decoration: none; }
       a:hover { text-decoration: underline; }
+      
+      /* Interactive Arcade Widget Styles */
+      .arcade-container {
+        background: #111;
+        color: #fff;
+        padding: 20px;
+        border-radius: 10px;
+        text-align: center;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        margin: 25px 0;
+      }
+      .arcade-container h3 {
+        margin-top: 0;
+        color: #00ffcc;
+        font-family: 'Courier New', Courier, monospace;
+        letter-spacing: 2px;
+      }
+      canvas {
+        background: #000;
+        border: 2px solid #00ffcc;
+        display: block;
+        margin: 0 auto;
+        max-width: 100%;
+      }
+      .controls {
+        margin-top: 15px;
+        font-size: 14px;
+        color: #aaa;
+      }
+      .btn {
+        background: #2E75B6;
+        color: white;
+        border: none;
+        padding: 8px 15px;
+        font-size: 14px;
+        font-weight: bold;
+        border-radius: 5px;
+        cursor: pointer;
+        margin-top: 10px;
+      }
+      .btn:hover { background: #1F4E79; }
     </style>
   </head>
   <body>
@@ -23,6 +64,19 @@
  
     <h2>My Interests</h2>
     <p>i enjoy bonding with people and going to arcades with friends in free time.</p>
+
+    <!-- Interactive Web Element: Mini Arcade Game -->
+    <div class="arcade-container">
+      <h3>ISMAIL'S MINI ARCADE</h3>
+      <p style="color: #fff; margin-bottom: 10px;">Catch the green gems, avoid the red bombs!</p>
+      <canvas id="arcadeCanvas" width="400" height="250"></canvas>
+      <div id="gameUI">
+        <button class="btn" id="startBtn" onclick="startGame()">Start Game</button>
+      </div>
+      <div class="controls">
+        Use <strong>Left / Right Arrow Keys</strong> or <strong>Mouse/Touch</strong> to move.
+      </div>
+    </div>
  
     <h2>My Goals for This Course</h2>
     <p>i would love to build and work on my skill of science because its an interesting subject</p>
@@ -34,5 +88,24 @@
       <li><strong>Onshape Project:</strong> <a href="https://cad.onshape.com/documents/a4828145a7ef917dbf5ac383/w/384db531765cc785987b432f/e/ed21cf4394ec8d804dbb035e" target="_blank">View my 3D Design</a></li>
       <li><strong>Code.org AP CSP App:</strong> <a href="https://studio.code.org/projects/applab/a3297083-e0c8-4746-8111-92d9a37f22fd" target="_blank">View my App</a></li>
     </ul>
-  </body> 
-</html>
+
+    <!-- Interactive Game Script -->
+    <script>
+      const canvas = document.getElementById("arcadeCanvas");
+      const ctx = canvas.getContext("2d");
+      const startBtn = document.getElementById("startBtn");
+
+      let gameRunning = false;
+      let score = 0;
+      let player = { x: 180, y: 220, w: 40, h: 15, speed: 7 };
+      let items = [];
+      let keys = {};
+
+      // Listeners
+      window.addEventListener("keydown", e => { keys[e.code] = true; if(["ArrowLeft","ArrowRight","Space"].includes(e.code)) e.preventDefault(); });
+      window.addEventListener("keyup", e => keys[e.code] = false);
+      canvas.addEventListener("mousemove", e => {
+        const rect = canvas.getBoundingClientRect();
+        player.x = (e.clientX - rect.left) * (canvas.width / rect.width) - player.w / 2;
+      });
+      canvas.addEventListener("touchmove", e => {
