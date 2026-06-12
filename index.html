@@ -67,16 +67,201 @@
 
     <!-- Interactive Web Element: Mini Arcade Game -->
     <div class="arcade-container">
-      <h3>ISMAIL'S MINI ARCADE</h3>
-      <p style="color: #fff; margin-bottom: 10px;">Catch the green gems, avoid the red bombs!</p>
-      <canvas id="arcadeCanvas" width="400" height="250"></canvas>
-      <div id="gameUI">
-        <button class="btn" id="startBtn" onclick="startGame()">Start Game</button>
-      </div>
-      <div class="controls">
-        Use <strong>Left / Right Arrow Keys</strong> or <strong>Mouse/Touch</strong> to move.
-      </div>
-    </div>
+  <h3>ISMAIL'S MINI ARCADE</h3>
+  <p style="color: #fff; margin-bottom: 10px;">Catch the green gems, avoid the red bombs!</p>
+  <canvas id="arcadeCanvas" width="400" height="250"></canvas>
+  <div id="gameUI">
+    <button class="btn" id="startBtn" onclick="startGame()">Start Game</button>
+  </div>
+  <div class="controls">
+    Use <strong>Left / Right Arrow Keys</strong> or <strong>Move Mouse / Drag Touch</strong> to play.
+  </div>
+</div>
+
+<!-- Add these styles inside your <style> tags -->
+<style>
+  .arcade-container {
+    background: #111;
+    color: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    margin: 25px 0;
+  }
+  .arcade-container h3 {
+    margin-top: 0;
+    color: #00ffcc;
+    font-family: 'Courier New', Courier, monospace;
+    letter-spacing: 2px;
+  }
+  canvas {
+    background: #000;
+    border: 2px solid #00ffcc;
+    display: block;
+    margin: 0 auto;
+    max-width: 100%;
+    cursor: crosshair;
+  }
+  .controls {
+    margin-top: 15px;
+    font-size: 14px;
+    color: #aaa;
+  }
+  .btn {
+    background: #2E75B6;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    font-size: 14px;
+    font-weight: bold;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-top: 10px;
+  }
+  .btn:hover { background: #1F4E79; }
+</style>
+
+<!-- Add this script right before your closing </body> tag -->
+<script>
+  const canvas = document.getElementById("arcadeCanvas");
+  const ctx = canvas.getContext("2d");
+  const startBtn = document.getElementById("startBtn");
+
+  let gameRunning = false;
+  let score = 0;
+  let spawnTimer = null;
+  let player = { x: 180, y: 220, w: 50, h: 15, speed: 8 };
+  let items = [];
+  let keys = {};
+
+  // Key listeners
+  window.addEventListener("keydown", e => { 
+    keys[e.code] = true; 
+    if(["ArrowLeft","ArrowRight","Space"].includes(e.code)) e.preventDefault(); 
+  });
+  window.addEventListener("keyup", e => keys[e.code] = false);
+  
+  // Fixed Mouse Control
+  canvas.addEventListener("mousemove", e => {
+    const rect = canvas.getBoundingClientRect();
+    const root = document.documentElement;
+    const mouseX = e.clientX - rect.left - root.scrollLeft;
+    player.x = (mouseX * (canvas.width / rect.width)) - player.w / 2;
+  });
+
+  // Fixed Touch Control
+  canvas.addEventListener("touchmove", e => {
+    if(e.touches.length > 0) {
+      const rect = canvas.getBoundingClientRect();
+      const touchX = e.touches[0].clientX - rect.left;
+      player.x = (touchX * (canvas.width / rect.width)) - player.w / 2;
+    }
+    e.preventDefault();
+  }, {passive: false});
+
+  function spawnItem() {
+    if (!gameRunning) return;
+    let isBomb = Math.random() < 0.35;
+    items.push({
+      x: Math.random() * (canvas.width - 20) + 10,
+      y: 0,
+      size: 8,
+      speed: 2 + Math.random() * 3,
+      type: isBomb ? "bomb" : "gem"
+    });
+    spawnTimer = setTimeout(spawnItem, 700);
+  }
+
+  function startGame() {
+    if (gameRunning) return;
+    gameRunning = true;
+    score = 0;
+    items = [];
+    player.x = 180;
+    startBtn.style.display = "none";
+    clearTimeout(spawnTimer);
+    spawnItem();
+    update();
+  }
+
+  function gameOver() {
+    gameRunning = false;
+    clearTimeout(spawnTimer);
+    startBtn.style.display = "inline-block";
+    startBtn.innerText = "Play Again";
+    
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "#ff3333";
+    ctx.font = "bold 24px Courier New";
+    ctx.textBaseline = "middle";
+    ctx.textAlign = "center";
+    ctx.fillText("GAME OVER", canvas.width / 2, canvas.height / 2 - 15);
+    ctx.fillStyle = "#fff";
+    ctx.font = "16px Courier New";
+    ctx.fillText("Final Score: " + score, canvas.width / 2, canvas.height / 2 + 20);
+  }
+
+  function update() {
+    if (!gameRunning) return;
+
+    if (keys["ArrowLeft"]) player.x -= player.speed;
+    if (keys["ArrowRight"]) player.x += player.speed;
+    
+    if (player.x < 0) player.x = 0;
+    if (player.x > canvas.width - player.w) player.x = canvas.width - player.w;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    ctx.fillStyle = "#00ffcc";
+    ctx.fillRect(player.x, player.y, player.w, player.h);
+
+    for (let i = items.length - 1; i >= 0; i--) {
+      let item = items[i];
+      item.y += item.speed;
+
+      ctx.beginPath();
+      ctx.arc(item.x, item.y, item.size, 0, Math.PI * 2);
+      ctx.fillStyle = item.type === "gem" ? "#00ff00" : "#ff3333";
+      ctx.fill();
+      ctx.closePath();
+
+      if (item.y + item.size >= player.y && item.y - item.size <= player.y + player.h) {
+        if (item.x + item.size >= player.x && item.x - item.size <= player.x + player.w) {
+          if (item.type === "gem") {
+            score += 10;
+            items.splice(i, 1);
+          } else {
+            gameOver();
+            return;
+          }
+          continue;
+        }
+      }
+
+      if (item.y > canvas.height + 20) {
+        items.splice(i, 1);
+      }
+    }
+
+    if(gameRunning) {
+      ctx.fillStyle = "#fff";
+      ctx.font = "bold 16px Courier New";
+      ctx.textAlign = "left";
+      ctx.textBaseline = "top";
+      ctx.fillText("SCORE: " + score, 15, 15);
+      requestAnimationFrame(update);
+    }
+  }
+
+  ctx.fillStyle = "#111";
+  ctx.fillRect(0,0,canvas.width, canvas.height);
+  ctx.fillStyle = "#aaa";
+  ctx.font = "16px Courier New";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText("Press Start to Play", canvas.width / 2, canvas.height / 2);
+</script>
  
     <h2>My Goals for This Course</h2>
     <p>i would love to build and work on my skill of science because its an interesting subject</p>
